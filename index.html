@@ -7,7 +7,7 @@
 
   <!-- Primary Meta Tags -->
   <!-- TODO: Replace with your paper title and author names -->
-  <meta name="title" content="Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
+  <meta name="title" content="Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
   <meta name="description"
     content="Group-SAE: A novel approach to train sparse autoencoders efficiently by clustering layers based on angular similarity, reducing training costs by up to 50%.">
   <meta name="keywords"
@@ -20,7 +20,7 @@
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Group-SAE">
   <meta property="og:title"
-    content="Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
+    content="Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
   <meta property="og:description"
     content="Group-SAE: A novel approach to train sparse autoencoders efficiently by clustering layers based on angular similarity, reducing training costs by up to 50%.">
   <meta property="og:url" content="https://github.com/ghidav/group-sae-page">
@@ -37,7 +37,7 @@
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title"
-    content="Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
+    content="Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
   <meta name="twitter:description"
     content="Group-SAE: A novel approach to train sparse autoencoders efficiently by clustering layers based on angular similarity, reducing training costs by up to 50%.">
   <meta name="twitter:image" content="static/images/main.png">
@@ -45,7 +45,7 @@
 
   <!-- Academic/Research Specific -->
   <meta name="citation_title"
-    content="Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
+    content="Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
   <meta name="citation_author" content="Davide Ghilardi, Federico Belotti, Marco Molinari, Tao Ma, Matteo Palmonari">
   <meta name="citation_publication_date" content="2024">
   <meta name="citation_conference_title" content="Research Paper">
@@ -64,7 +64,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
 
-  <title>Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups</title>
+  <title>Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups</title>
 
   <!-- Favicon and App Icons -->
   <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
@@ -107,7 +107,7 @@
   {
     "@context": "https://schema.org",
     "@type": "ScholarlyArticle",
-    "headline": "Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups",
+    "headline": "Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups",
     "description": "Group-SAE: A novel approach to train sparse autoencoders efficiently by clustering layers based on angular similarity, reducing training costs by up to 50%.",
     "author": [
       {
@@ -229,8 +229,7 @@
         <div class="container is-max-desktop">
           <div class="columns is-centered">
             <div class="column has-text-centered">
-              <h1 class="title is-1 publication-title">Efficient Training of Sparse Autoencoders for Large Language
-                Models via Layer Groups</h1>
+              <h1 class="title is-1 publication-title">Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups</h1>
               <div class="is-size-5 publication-authors">
                 <!-- TODO: Replace with your paper authors and their personal links -->
                 <span class="author-block">
@@ -296,7 +295,7 @@
                     <a href="https://huggingface.co/Group-SAE" target="_blank"
                       class="external-link button is-normal is-rounded is-dark">
                       <span class="icon">
-                        <i class="fab fa-face-smiling-hands"></i>
+                        <img src="static/images/hf-logo.svg" alt="HF Logo" width="24" height="24">
                       </span>
                       <span>Models</span>
                     </a>
@@ -353,29 +352,23 @@
     <section class="hero is-small">
       <div class="hero-body">
         <div class="container">
-          <h2 class="title is-3">Group-SAE</h2>
           <div class="columns is-centered">
             <div class="column is-four-fifths">
+              <h2 class="title">Group-SAE</h2>
               <div class="content">
-                <p>Our method leverages the observation that nearby neural network layers tend to learn similar
-                  representations. Instead of training individual SAEs for each layer, we:</p>
-                <ol>
-                  <li><strong>Compute Angular Distances:</strong> Calculate mean angular distances between residual
-                    stream activations of different layers</li>
-                  <li><strong>Hierarchical Clustering:</strong> Use agglomerative clustering with complete linkage to
-                    group similar layers</li>
-                  <li><strong>Optimal Group Selection:</strong> Apply AMAD (Average Maximum Angular Distance) metric to
-                    determine the optimal number of groups</li>
-                  <li><strong>Efficient Training:</strong> Train a single SAE per group, significantly reducing
-                    computational costs</li>
-                </ol>
+                <p>Group-SAE is a novel technique that reduces the computational demand for training a suite of SAEs for a given model. We group model layers by the cosine similarity of their activations and train a single SAE per group.</p>
+                
+                <h3>Grouping strategy</h3>
+                <p>Our grouping strategy consists of four steps. First, we cache 10M activations for each layer of the model from tokens of its training dataset. Second, we compute the average cosine distance for each pair of layer. From this process, we obtain a distance matrix. Third, we apply hierarchical clustering* on the distance matrix to obtain the partitions in g=1,…,G groups. The last step consists of computing the AMAD, the average maximum angular distance of groups, for each partition.</p>
+                <p>We identify an optimal threshold around AMAD ≈ 0.2, beyond which reconstruction performance degrades more rapidly.</p>
 
-                <h3>AMAD Metric</h3>
-                <p>The Average Maximum Angular Distance quantifies the average worst-case distance within each group:
-                </p>
-                <p style="text-align: center; font-style: italic;">AMAD(G) = (1/G) × Σ D_g</p>
-                <p>We identify an optimal threshold around AMAD ≈ 0.2, beyond which reconstruction performance degrades
-                  more rapidly.</p>
+                <div class="container is-max-desktop">
+                  <p class="image">
+                    <img src="static/gifs/grouping.gif" alt="Description of GIF" style="width: 100%; height: auto;">
+                  </p>
+                </div>
+
+                <h3>SAE training</h3>
               </div>
             </div>
           </div>
@@ -386,12 +379,12 @@
 
 
     <!-- Evaluations -->
-    <section class="hero is-small">
+    <section class="hero is-small is-light">
       <div class="hero-body">
         <div class="container">
-          <h2 class="title is-3">Evaluations</h2>
+          <h2 class="title">Evaluations</h2>
+          <h3 class="title is-4">Reconstruction vs. Similarity</h3>
           <div class="columns">
-            <h3 class="title is-4">Reconstruction vs. Similarity</h3>
             <div class="column is-half">
               <img src="static/images/eval/amd_vs_fvu.png"
                 alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
@@ -405,8 +398,8 @@
                   features spread across similar layers.</em></p>
             </div>
           </div>
+          <h3 class="title is-4">Reconstruction vs. Compute</h3>
           <div class="columns">
-            <h3 class="title is-4">Reconstruction vs. Compute</h3>
             <div class="column is-half">
               <img src="static/images/eval/relative_flops_vs_fvu.png"
                 alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
@@ -420,35 +413,16 @@
                   features spread across similar layers.</em></p>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-    <!-- End additional analysis -->
-
-
-    <!-- Additional Analysis -->
-    <section class="hero is-small">
-      <div class="hero-body">
-        <div class="container">
-          <h2 class="title is-3">Feature Analysis</h2>
+          <h3 class="title is-4">Autointerpretability</h3>
           <div class="columns">
             <div class="column is-half">
-              <h3 class="title is-4">Autointerpretability</h3>
-              <img src="static/images/concordance/concordance_pythia-160m_all.png"
+              <img src="static/images/autointerp/detection.png"
                 alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
               <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
                   baseline and Group-SAEs.</em></p>
             </div>
             <div class="column is-half">
-              <h3 class="title is-4">Feature Concordance</h3>
-              <img src="static/images/concordance/concordance_pythia-160m_all.png"
-                alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
-              <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
-                  baseline and Group-SAEs.</em></p>
-            </div>
-            <div class="column is-half">
-              <h3 class="title is-4">Feature Distribution</h3>
-              <img src="static/images/spreading/feat_spread_pythia-160m.png" alt="Feature distribution across layers"
+              <img src="static/images/autointerp/fuzzing.png" alt="Feature distribution across layers"
                 loading="lazy" style="width: 100%;" />
               <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing how
                   features spread across similar layers.</em></p>
@@ -458,7 +432,6 @@
       </div>
     </section>
     <!-- End additional analysis -->
-
 
     <!--BibTex citation -->
     <section class="section" id="BibTeX">
@@ -471,8 +444,8 @@
           </button>
         </div>
         <pre id="bibtex-code"><code>@article{GroupSAE2024,
-  title={Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups},
-  author={Group-SAE Research Team},
+  title={Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups},
+  author={Davide Ghilardi, Federico Belotti, Marco Molinari, Tao Ma, Matteo Palmonari},
   year={2024},
   url={https://github.com/ghidav/group-sae}
 }</code></pre>
