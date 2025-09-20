@@ -751,3 +751,28 @@ a:focus {
 
 
 
+.evaluation-table {
+  background-color: var(--background-secondary);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.evaluation-table thead th {
+  background-color: var(--background-secondary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.evaluation-table td,
+.evaluation-table th {
+  background-color: transparent;
+}
+
+.evaluation-table tbody tr:nth-child(even) {
+  background-color: transparent;
+}
+
+.evaluation-table tbody tr:nth-child(odd) {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+

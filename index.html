@@ -7,7 +7,8 @@
 
   <!-- Primary Meta Tags -->
   <!-- TODO: Replace with your paper title and author names -->
-  <meta name="title" content="Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
+  <meta name="title"
+    content="Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups">
   <meta name="description"
     content="Group-SAE: A novel approach to train sparse autoencoders efficiently by clustering layers based on angular similarity, reducing training costs by up to 50%.">
   <meta name="keywords"
@@ -189,6 +190,16 @@
     "logo": "static/images/favicon.ico"
   }
   </script>
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      }
+    };
+  </script>
+  <script defer id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 
 <body>
@@ -229,7 +240,8 @@
         <div class="container is-max-desktop">
           <div class="columns is-centered">
             <div class="column has-text-centered">
-              <h1 class="title is-1 publication-title">Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups</h1>
+              <h1 class="title is-1 publication-title">Group-SAE: Efficient Training of Sparse Autoencoders for Large
+                Language Models via Layer Groups</h1>
               <div class="is-size-5 publication-authors">
                 <!-- TODO: Replace with your paper authors and their personal links -->
                 <span class="author-block">
@@ -356,11 +368,33 @@
             <div class="column is-four-fifths">
               <h2 class="title">Group-SAE</h2>
               <div class="content">
-                <p>Group-SAE is a novel technique that reduces the computational demand for training a suite of SAEs for a given model. We group model layers by the cosine similarity of their activations and train a single SAE per group.</p>
-                
+                <p>
+                  Group-SAE is a novel technique that reduces the computational demand for training a suite of SAEs for
+                  a given model.
+                  We group model layers by the cosine similarity of their activations and train a single SAE per group.
+                </p>
+
                 <h3>Grouping strategy</h3>
-                <p>Our grouping strategy consists of four steps. First, we cache 10M activations for each layer of the model from tokens of its training dataset. Second, we compute the average cosine distance for each pair of layer. From this process, we obtain a distance matrix. Third, we apply hierarchical clustering* on the distance matrix to obtain the partitions in g=1,…,G groups. The last step consists of computing the AMAD, the average maximum angular distance of groups, for each partition.</p>
-                <p>We identify an optimal threshold around AMAD ≈ 0.2, beyond which reconstruction performance degrades more rapidly.</p>
+                <p>
+                  Our grouping strategy consists of four steps:
+                <ol>
+                  <li>We cache 10M activations for each layer of the model from tokens of its training dataset. </li>
+                  <li>We compute the average cosine distance for each pair of layer. From this process, we obtain a
+                    distance matrix.</li>
+                  <li>We apply <a href="https://en.wikipedia.org/wiki/Hierarchical_clustering" target="_blank"
+                      rel="noopener noreferrer">hierarchical clustering</a> on the distance matrix to obtain the
+                    partitions in $g=1,…,G$ groups.</li>
+                  <li>The last step consists of computing the AMAD, the average maximum angular distance of groups, for
+                    each partition.</li>
+                </ol>
+                <p>
+                  Given the AMAD computed at step 4., one can choose the optimal number of groups $\widehat{G}$ as $\widehat{G} = \min \{G \in \{1, ..., L-1\} \mid \text{AMAD}(G) < \theta \}$.
+                  We identify an optimal threshold around $\theta \approx 0.2$, beyond which reconstruction performance degrades more rapidly.
+                  Intuitively, when $G$ is small, each group aggregates more distant layers, which increases AMAD; 
+                  conversely, when $G=L$ (one group per layer), AMAD becomes zero but no computational savings are achieved. 
+                  The goal is therefore to select the smallest $G$ such that the groups remain sufficiently homogeneous, i.e., 
+                  AMAD$(G)$ stays below a target threshold.
+                </p>
 
                 <div class="container is-max-desktop">
                   <p class="image">
@@ -382,50 +416,120 @@
     <section class="hero is-small is-light">
       <div class="hero-body">
         <div class="container">
-          <h2 class="title">Evaluations</h2>
-          <h3 class="title is-4">Reconstruction vs. Similarity</h3>
-          <div class="columns">
-            <div class="column is-half">
-              <img src="static/images/eval/amd_vs_fvu.png"
-                alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
-              <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
-                  baseline and Group-SAEs.</em></p>
-            </div>
-            <div class="column is-half">
-              <img src="static/images/eval/amd_vs_delta_ce.png" alt="Feature distribution across layers"
-                loading="lazy" style="width: 100%;" />
-              <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing how
-                  features spread across similar layers.</em></p>
-            </div>
-          </div>
-          <h3 class="title is-4">Reconstruction vs. Compute</h3>
-          <div class="columns">
-            <div class="column is-half">
-              <img src="static/images/eval/relative_flops_vs_fvu.png"
-                alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
-              <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
-                  baseline and Group-SAEs.</em></p>
-            </div>
-            <div class="column is-half">
-              <img src="static/images/eval/relative_flops_vs_delta_ce.png" alt="Feature distribution across layers"
-                loading="lazy" style="width: 100%;" />
-              <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing how
-                  features spread across similar layers.</em></p>
-            </div>
-          </div>
-          <h3 class="title is-4">Autointerpretability</h3>
-          <div class="columns">
-            <div class="column is-half">
-              <img src="static/images/autointerp/detection.png"
-                alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
-              <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
-                  baseline and Group-SAEs.</em></p>
-            </div>
-            <div class="column is-half">
-              <img src="static/images/autointerp/fuzzing.png" alt="Feature distribution across layers"
-                loading="lazy" style="width: 100%;" />
-              <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing how
-                  features spread across similar layers.</em></p>
+          <div class="columns is-centered">
+            <div class="column is-four-fifths">
+              <h2 class="title">Evaluations</h2>
+
+              <h3 class="title is-4">Comparison with baselines</h3>
+              <div class="content">
+                <p class="has-text-justified">
+                  FVU and $\Delta\text{CE}$ for different approaches across model sizes. Our AMAD-based grouping
+                  strategy
+                  attains lower FVU and $\Delta\text{CE}$ than the baselines: evenly spaced groups and smaller SAEs
+                  trained on all layers. Both baselines use the same training FLOPs as our method. Percentages denote
+                  improvement over the <em>Smaller SAEs (All layers)</em> baseline (positive&nbsp;=&nbsp;better).
+                </p>
+              </div>
+              <div class="table-container">
+                <table class="table is-striped is-hoverable is-fullwidth evaluation-table">
+                  <thead>
+                    <tr>
+                      <th rowspan="2">Approach</th>
+                      <th colspan="2" class="has-text-centered">Pythia-160M</th>
+                      <th colspan="2" class="has-text-centered">Pythia-410M</th>
+                      <th colspan="2" class="has-text-centered">Pythia-1B</th>
+                    </tr>
+                    <tr>
+                      <th>FVU</th>
+                      <th>$\Delta\text{CE}_{\%}$</th>
+                      <th>FVU</th>
+                      <th>$\Delta\text{CE}_{\%}$</th>
+                      <th>FVU</th>
+                      <th>$\Delta\text{CE}_{\%}$</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Group SAEs (AMAD with $\widehat{G}$ groups)</th>
+                      <td><strong>0.108</strong> <span class="is-size-7 has-text-grey">(+6.1%)</span></td>
+                      <td>6.01 <span class="is-size-7 has-text-grey">(+18.5%)</span></td>
+                      <td><strong>0.138</strong> <span class="is-size-7 has-text-grey">(+5.5%)</span></td>
+                      <td><strong>5.94</strong> <span class="is-size-7 has-text-grey">(+16.3%)</span></td>
+                      <td><strong>0.182</strong> <span class="is-size-7 has-text-grey">(+3.2%)</span></td>
+                      <td><strong>6.43</strong> <span class="is-size-7 has-text-grey">(+20.6%)</span></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Group SAEs (Evenly spaced with $\widehat{G}$ groups)</th>
+                      <td>0.114 <span class="is-size-7 has-text-grey">(+0.9%)</span></td>
+                      <td><strong>5.40</strong> <span class="is-size-7 has-text-grey">(+26.7%)</span></td>
+                      <td>0.145 <span class="is-size-7 has-text-grey">(+0.7%)</span></td>
+                      <td>6.01 <span class="is-size-7 has-text-grey">(+15.4%)</span></td>
+                      <td>0.189 <span class="is-size-7 has-text-grey">(-0.5%)</span></td>
+                      <td>6.63 <span class="is-size-7 has-text-grey">(+18.1%)</span></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Smaller SAEs (All layers, same PFLOPs)</th>
+                      <td>0.115 <span class="is-size-7 has-text-grey">(+0.0%)</span></td>
+                      <td>7.37 <span class="is-size-7 has-text-grey">(+0.0%)</span></td>
+                      <td>0.146 <span class="is-size-7 has-text-grey">(+0.0%)</span></td>
+                      <td>7.10 <span class="is-size-7 has-text-grey">(+0.0%)</span></td>
+                      <td>0.188 <span class="is-size-7 has-text-grey">(+0.0%)</span></td>
+                      <td>8.10 <span class="is-size-7 has-text-grey">(+0.0%)</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 class="title is-4">Reconstruction vs. Similarity</h3>
+              <div class="columns">
+                <div class="column is-half">
+                  <img src="static/images/eval/amd_vs_fvu.png" alt="Feature concordance heatmap for Pythia-160M"
+                    loading="lazy" style="width: 100%;" />
+                  <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
+                      baseline and Group-SAEs.</em></p>
+                </div>
+                <div class="column is-half">
+                  <img src="static/images/eval/amd_vs_delta_ce.png" alt="Feature distribution across layers"
+                    loading="lazy" style="width: 100%;" />
+                  <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing
+                      how
+                      features spread across similar layers.</em></p>
+                </div>
+              </div>
+
+              <h3 class="title is-4">Reconstruction vs. Compute (PFLOPs)</h3>
+              <div class="columns">
+                <div class="column is-half">
+                  <img src="static/images/eval/relative_flops_vs_fvu.png"
+                    alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
+                  <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
+                      baseline and Group-SAEs.</em></p>
+                </div>
+                <div class="column is-half">
+                  <img src="static/images/eval/relative_flops_vs_delta_ce.png" alt="Feature distribution across layers"
+                    loading="lazy" style="width: 100%;" />
+                  <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing
+                      how
+                      features spread across similar layers.</em></p>
+                </div>
+              </div>
+
+              <h3 class="title is-4">Auto-Interpretability</h3>
+              <div class="columns">
+                <div class="column is-half">
+                  <img src="static/images/autointerp/detection.png" alt="Feature concordance heatmap for Pythia-160M"
+                    loading="lazy" style="width: 100%;" />
+                  <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
+                      baseline and Group-SAEs.</em></p>
+                </div>
+                <div class="column is-half">
+                  <img src="static/images/autointerp/fuzzing.png" alt="Feature distribution across layers"
+                    loading="lazy" style="width: 100%;" />
+                  <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing
+                      how
+                      features spread across similar layers.</em></p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -443,12 +547,16 @@
             <span class="copy-text">Copy</span>
           </button>
         </div>
-        <pre id="bibtex-code"><code>@article{GroupSAE2024,
-  title={Group-SAE: Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups},
-  author={Davide Ghilardi, Federico Belotti, Marco Molinari, Tao Ma, Matteo Palmonari},
-  year={2024},
-  url={https://github.com/ghidav/group-sae}
-}</code></pre>
+        <pre id="bibtex-code">
+<code>@inproceedings{
+  ghilardi2025efficient,
+  title={Efficient Training of Sparse Autoencoders for Large Language Models via Layer Groups},
+  author={Davide Ghilardi and Federico Belotti and Marco Molinari and Tao Ma and Matteo Palmonari},
+  booktitle={The 2025 Conference on Empirical Methods in Natural Language Processing},
+  year={2025},
+  url={https://openreview.net/forum?id=bk4PhF17cm}
+}</code>
+        </pre>
       </div>
     </section>
     <!--End BibTex citation -->
