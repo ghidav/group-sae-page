@@ -203,8 +203,6 @@
 </head>
 
 <body>
-
-
   <!-- Scroll to Top Button -->
   <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
     <i class="fas fa-chevron-up"></i>
@@ -388,21 +386,73 @@
                     each partition.</li>
                 </ol>
                 <p>
-                  Given the AMAD computed at step 4., one can choose the optimal number of groups $\widehat{G}$ as $\widehat{G} = \min \{G \in \{1, ..., L-1\} \mid \text{AMAD}(G) < \theta \}$.
-                  We identify an optimal threshold around $\theta \approx 0.2$, beyond which reconstruction performance degrades more rapidly.
-                  Intuitively, when $G$ is small, each group aggregates more distant layers, which increases AMAD; 
-                  conversely, when $G=L$ (one group per layer), AMAD becomes zero but no computational savings are achieved. 
-                  The goal is therefore to select the smallest $G$ such that the groups remain sufficiently homogeneous, i.e., 
-                  AMAD$(G)$ stays below a target threshold.
-                </p>
+                  Given the AMAD computed at step 4., one can choose the optimal number of groups $\widehat{G}$ as
+                  $\widehat{G} = \min \{G \in \{1, ..., L-1\} \mid \text{AMAD}(G) < \theta \}$. We identify an optimal
+                    threshold around $\theta \approx 0.2$, beyond which reconstruction performance degrades more
+                    rapidly. Intuitively, when $G$ is small, each group aggregates more distant layers, which increases
+                    AMAD; conversely, when $G=L$ (one group per layer), AMAD becomes zero but no computational savings
+                    are achieved. The goal is therefore to select the smallest $G$ such that the groups remain
+                    sufficiently homogeneous, i.e., AMAD$(G)$ stays below a target threshold. </p>
 
-                <div class="container is-max-desktop">
-                  <p class="image">
-                    <img src="static/gifs/grouping.gif" alt="Description of GIF" style="width: 100%; height: auto;">
-                  </p>
-                </div>
+                    <div class="container is-max-desktop">
+                      <p class="image">
+                        <img src="static/gifs/grouping.gif" alt="Description of GIF" style="width: 100%; height: auto;">
+                      </p>
+                    </div>
 
-                <h3>SAE training</h3>
+                    <h3>SAE training</h3>
+                    <p>
+                      We train SAEs (and Group-SAEs) on the residual stream after the MLP using Top-$K$ activation
+                      function with $K=128$ and expansion factor $c=16$,
+                      sampling 1B tokens from the Pile with context size 1024 (same pretraining data as the Pythia
+                      160M/410M/1B models <a class="cite" data-cite="biderman2023pythia"></a>).<br>
+                      The reconstruction objective is the Fraction of Variance Unexplained (FVU) <a class="cite"
+                        data-cite="lawson2024mlsae"></a>, i.e.:
+                      $$
+                      \text{FVU}(\mathbf X, \widehat{\mathbf
+                      X})=\frac{\lVert\mathbf{X}-\widehat{\mathbf{X}}\rVert_F^2}{\lVert \mathbf{X} -
+                      \overline{\mathbf{X}} \rVert_F^2}
+                      $$
+                      where $\mathbf X, \widehat{\mathbf X} \in \mathbb R^{B \times n}$ represent batch of activations
+                      and reconstructions, respectively.
+                      <br>
+                      The total loss is then:
+                      $$
+                      \mathcal L(\mathbf X)=\text{FVU}(\mathbf X,\widehat{\mathbf
+                      X})+\alpha_{\text{aux}}\cdot\text{AuxK}(\mathbf X,\widehat{\mathbf X})
+                      $$
+                      with $\alpha_{\text{aux}}=\tfrac{1}{32}$ and $\text{AuxK}(\mathbf X,\widehat{\mathbf X})$ is the
+                      auxiliary loos function defined in <a class="cite" data-cite="gao2024topk"></a>.<br><br>
+
+                      <!-- We use Adam ($\beta_1{=}0.9,\beta_2{=}0.999$), learning rate
+                      $\text{lr}=2{\times}10^{-4}/\sqrt{m/2^{14}}$,
+                      decoder column norm constraint ($\lVert \mathbf{w}_i\rVert_2{=}1$),
+                      activation normalization to mean squared $\ell_2$ norm 1, and mark a latent as “dead” after 10M
+                      tokens.<br> -->
+                      We train both SAEs and Group-SAEs using Top-$K$ activation with $K=128$ and expansion factor of
+                      $c=16$ on
+                      the residual stream after the MLP contribution of three models of varying sizes from the Pythia
+                      family <a class="cite" data-cite="biderman2023pythia"></a>: Pythia 160M, Pythia 410M, and Pythia
+                      1B.<br><br>
+
+                      We use Adam ($\beta_1{=}0.9,\beta_2{=}0.999$), learning rate
+                      $\text{lr}=2{\times}10^{-4}/\sqrt{m/2^{14}}$. We use a
+                      batch size of $131072, 65536\text{ and } 32768$ for the three models, respectively, to maximize
+                      computational usage. Following <a class="cite" data-cite="bricken2023monosemanticity"></a> we
+                      constrain the decoder columns
+                      to have unit norm. Additionally, we normalize the activations to
+                      have mean squared $\ell_2$ norm of 1 during SAE training, by first estimating the norm scaling
+                      factor over 5 million
+                      tokens of our train set. We mark a latent as “dead” after 10M
+                      tokens.<br><br>
+
+                      To train all the SAEs, we sample 1 billion tokens from the Pile dataset <a class="cite"
+                        data-cite="pile"></a> and
+                      process them with a context size of 1024.
+                      For Group-SAEs, activations in each batch are drawn from a random layer within the target group so
+                      every SAE (baseline or group)
+                      processes exactly 1B tokens.
+                    </p>
               </div>
             </div>
           </div>
@@ -537,6 +587,14 @@
     </section>
     <!-- End additional analysis -->
 
+    <section class="section" id="references">
+      <div class="container is-max-desktop content">
+        <h2 class="title">References</h2>
+        <div id="refs"></div>
+      </div>
+    </section>
+
+
     <!--BibTex citation -->
     <section class="section" id="BibTeX">
       <div class="container is-max-desktop content">
@@ -589,6 +647,137 @@
     <!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
 
     <!-- End of Statcounter Code -->
+
+    <script src="https://cdn.jsdelivr.net/npm/citation-js@0.4.0-8" type="text/javascript"></script>
+    <script>
+      (async () => {
+        const el = document.getElementById('refs');
+        if (!el) return;
+
+        const Cite =
+          (typeof window.require === 'function' && window.require('citation-js')) ||
+          window.Cite || window.Citation;
+
+        if (!Cite) {
+          el.textContent = 'Citation.js loaded but API not found.';
+          return;
+        }
+
+        // Load refs.bib, fallback to <pre><code>…</code></pre> in #BibTeX
+        let bib;
+        try {
+          const r = await fetch('static/bib/refs.bib', { cache: 'no-cache' });
+          if (!r.ok) throw new Error('refs.bib not found');
+          bib = await r.text();
+        } catch {
+          const pre = document.querySelector('#BibTeX pre code');
+          if (!pre) {
+            el.textContent = 'References failed to load.';
+            return;
+          }
+          bib = pre.textContent;
+        }
+
+        let cite;
+        try {
+          cite = new Cite(bib);
+        } catch (e) {
+          console.error('[citations] parse error:', e);
+          el.textContent = 'References failed to parse.';
+          return;
+        }
+
+        const entries = cite.data || [];
+        const html = cite.format('bibliography', {
+          format: 'html',
+          template: 'ama',   // or 'apa', 'vancouver', ...
+          lang: 'en-US'
+        });
+        el.innerHTML = html;
+
+        (function makeNumbered() {
+          const root = document.getElementById('refs');
+          const body = root.querySelector('.csl-bib-body');
+          if (!body) return;
+
+          // Collect entries
+          const entries = [...body.querySelectorAll('.csl-entry')];
+          if (!entries.length) return;
+
+          // Build an ordered list
+          const ol = document.createElement('ol');
+          // preserve class so any CSL CSS you add still applies
+          ol.className = body.className || 'csl-bib-body';
+
+          entries.forEach((div, i) => {
+            const li = document.createElement('li');
+            li.className = div.className || 'csl-entry';
+            li.innerHTML = div.innerHTML;
+            ol.appendChild(li);
+          });
+
+          // Replace the CSL body with the ordered list
+          body.replaceWith(ol);
+        })();
+
+        // Optional: stable IDs for inline links <a href="#ref-<key>">
+        const list = el.querySelector('ol, ul') || el;
+        [...list.children].forEach((li, i) => {
+          const key = entries[i] && entries[i].id;
+          if (key) li.id = `ref-${key}`;
+        });
+      })();
+    </script>
+    <script>
+      // Build a map: bibkey -> citation number
+      function buildCiteIndex() {
+        const refsEl = document.getElementById('refs');
+        const list = refsEl && refsEl.querySelector('ol');
+        const index = new Map();
+        if (!list) return index; // not ready yet
+        [...list.children].forEach((li, i) => {
+          const m = /^ref-(.+)$/.exec(li.id || '');
+          if (m) index.set(m[1], i + 1);
+        });
+        return index;
+      }
+
+      function formatBracketed(nums) {
+        nums.sort((a, b) => a - b);
+        const ranges = [];
+        for (let i = 0; i < nums.length;) {
+          let j = i;
+          while (j + 1 < nums.length && nums[j + 1] === nums[j] + 1) j++;
+          ranges.push(i === j ? `${nums[i]}` : `${nums[i]}–${nums[j]}`);
+          i = j + 1;
+        }
+        return `[${ranges.join(', ')}]`;
+      }
+
+      function renderInlineCitations() {
+        const idx = buildCiteIndex();
+        if (idx.size === 0) return false; // not ready yet
+        document.querySelectorAll('a.cite[data-cite]').forEach(a => {
+          const keys = a.getAttribute('data-cite').split(',').map(s => s.trim()).filter(Boolean);
+          const nums = keys.map(k => idx.get(k)).filter(n => Number.isInteger(n));
+          if (!nums.length) return;
+          a.textContent = formatBracketed(nums);
+          a.setAttribute('href', `#ref-${keys[0]}`);
+        });
+        return true;
+      }
+
+      // Retry until #refs has an <ol>
+      function renderInlineCitationsWhenReady(attempt = 0) {
+        if (renderInlineCitations()) return;
+        if (attempt > 200) return; // ~10s cap at 50ms intervals
+        setTimeout(() => renderInlineCitationsWhenReady(attempt + 1), 50);
+      }
+
+      // Call this AFTER you kick off Citation.js rendering
+      renderInlineCitationsWhenReady();
+    </script>
+
 
 </body>
 
