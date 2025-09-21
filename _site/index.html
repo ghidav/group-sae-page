@@ -402,10 +402,12 @@
 
                     <h3>SAE training</h3>
                     <p>
-                      We train SAEs (and Group-SAEs) on the residual stream after the MLP using Top-$K$ activation
-                      function with $K=128$ and expansion factor $c=16$,
-                      sampling 1B tokens from the Pile with context size 1024 (same pretraining data as the Pythia
-                      160M/410M/1B models <a class="cite" data-cite="biderman2023pythia"></a>).<br>
+                      We train both SAEs and Group-SAEs using Top-$K$ activation with $K=128$ and expansion factor of
+                      $c=16$ on
+                      the residual stream after the MLP contribution of three models of varying sizes from the Pythia
+                      family <a class="cite" data-cite="biderman2023pythia"></a>: Pythia 160M, Pythia 410M, and Pythia
+                      1B.<br><br>
+
                       The reconstruction objective is the Fraction of Variance Unexplained (FVU) <a class="cite"
                         data-cite="lawson2024mlsae"></a>, i.e.:
                       $$
@@ -414,29 +416,16 @@
                       \overline{\mathbf{X}} \rVert_F^2}
                       $$
                       where $\mathbf X, \widehat{\mathbf X} \in \mathbb R^{B \times n}$ represent batch of activations
-                      and reconstructions, respectively.
-                      <br>
-                      The total loss is then:
+                      and reconstructions, respectively. The total loss is then:
                       $$
                       \mathcal L(\mathbf X)=\text{FVU}(\mathbf X,\widehat{\mathbf
                       X})+\alpha_{\text{aux}}\cdot\text{AuxK}(\mathbf X,\widehat{\mathbf X})
                       $$
                       with $\alpha_{\text{aux}}=\tfrac{1}{32}$ and $\text{AuxK}(\mathbf X,\widehat{\mathbf X})$ is the
-                      auxiliary loos function defined in <a class="cite" data-cite="gao2024topk"></a>.<br><br>
-
-                      <!-- We use Adam ($\beta_1{=}0.9,\beta_2{=}0.999$), learning rate
-                      $\text{lr}=2{\times}10^{-4}/\sqrt{m/2^{14}}$,
-                      decoder column norm constraint ($\lVert \mathbf{w}_i\rVert_2{=}1$),
-                      activation normalization to mean squared $\ell_2$ norm 1, and mark a latent as “dead” after 10M
-                      tokens.<br> -->
-                      We train both SAEs and Group-SAEs using Top-$K$ activation with $K=128$ and expansion factor of
-                      $c=16$ on
-                      the residual stream after the MLP contribution of three models of varying sizes from the Pythia
-                      family <a class="cite" data-cite="biderman2023pythia"></a>: Pythia 160M, Pythia 410M, and Pythia
-                      1B.<br><br>
+                      auxiliary loos function defined in <a class="cite" data-cite="gao2024topk"></a>.<br><br>     
 
                       We use Adam ($\beta_1{=}0.9,\beta_2{=}0.999$), learning rate
-                      $\text{lr}=2{\times}10^{-4}/\sqrt{m/2^{14}}$. We use a
+                      $\text{lr}=2{\times}10^{-4}/\sqrt{c \cdot n/2^{14}}$. We use a
                       batch size of $131072, 65536\text{ and } 32768$ for the three models, respectively, to maximize
                       computational usage. Following <a class="cite" data-cite="bricken2023monosemanticity"></a> we
                       constrain the decoder columns
@@ -448,7 +437,8 @@
 
                       To train all the SAEs, we sample 1 billion tokens from the Pile dataset <a class="cite"
                         data-cite="pile"></a> and
-                      process them with a context size of 1024.
+                      process them with a context size of 1024 (same pretraining data as the Pythia
+                      160M/410M/1B models).
                       For Group-SAEs, activations in each batch are drawn from a random layer within the target group so
                       every SAE (baseline or group)
                       processes exactly 1B tokens.
