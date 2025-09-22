@@ -385,27 +385,61 @@
                   <li>The last step consists of computing the AMAD, the average maximum angular distance of groups, for
                     each partition.</li>
                 </ol>
-                <p>
-                  Given the AMAD computed at step 4., one can choose the optimal number of groups $\widehat{G}$ as
-                  $\widehat{G} = \min \{G \in \{1, ..., L-1\} \mid \text{AMAD}(G) < \theta \}$. We identify an optimal
-                    threshold around $\theta \approx 0.2$, beyond which reconstruction performance degrades more
-                    rapidly. Intuitively, when $G$ is small, each group aggregates more distant layers, which increases
-                    AMAD; conversely, when $G=L$ (one group per layer), AMAD becomes zero but no computational savings
-                    are achieved. The goal is therefore to select the smallest $G$ such that the groups remain
-                    sufficiently homogeneous, i.e., AMAD$(G)$ stays below a target threshold. </p>
 
-                    <div class="container is-max-desktop">
-                      <p class="image">
-                        <img src="static/gifs/grouping.gif" alt="Description of GIF" style="width: 100%; height: auto;">
-                      </p>
+                <div class="container is-max-desktop" style="margin-bottom: 3rem; margin-top: 3rem;">
+                  <p class="image">
+                    <img src="static/gifs/grouping.gif" alt="Illustration of the grouping strategy"
+                      style="width: 100%; height: auto;">
+                  </p>
+                </div>
+
+                <p>
+                  Given the AMAD computed at step 4., one can choose the optimal number of groups $\widehat{G}$ as:
+                </p>
+                <p class="has-text-centered">
+                  \[
+                  \widehat{G} = \min \{G \in \{1, ..., L-1\} \mid \text{AMAD}(G) < \theta \} \] </p>
+                    <p>
+                      Intuitively, when $G$ is small, each group aggregates distant layers, increasing AMAD; conversely, when $G=L$ (one group per layer), AMAD becomes zero but no computational savings are achieved. <strong>The goal is therefore to select the smallest $G$ such that the groups remain sufficiently homogeneous</strong>, i.e., AMAD$(G)$ stays below a target threshold.
+                    </p>
+                    <p>
+                      By training Group-SAEs for different models and values of G, and plotting performance metrics against AMAD (see figure below, <i>Figure 2</i> in the paper), we identify an optimal threshold around $\theta^* \approx 0.2$, beyond which reconstruction
+                      performance
+                      degrades more rapidly.
+                    </p>
+
+                    <div class="columns is-centered">
+                      <div class="column is-half">
+                        <div class="has-text-centered">
+                          <img src="static/images/eval/amd_vs_fvu.png"
+                              alt="Feature concordance heatmap for Pythia-160M"
+                              loading="lazy" style="width: 70%;" />
+                          <p class="has-text-centered">
+                            <em>Mean Maximum Concordance (MMCO) showing feature similarity
+                            between baseline and Group-SAEs.</em>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="column is-half has-text-centered">
+                        <img src="static/images/eval/amd_vs_delta_ce.png"
+                            alt="Feature distribution across layers"
+                            loading="lazy" style="width: 70%;" />
+                        <p class="has-text-centered">
+                          <em>Feature activation distribution across layers within groups,
+                          showing how features spread across similar layers.</em>
+                        </p>
+                      </div>
                     </div>
 
                     <h3>SAE training</h3>
                     <p>
                       We train both SAEs and Group-SAEs using Top-$K$ activation with $K=128$ and expansion factor of
                       $c=16$ on
-                      the residual stream after the MLP contribution of three models of varying sizes from the Pythia
-                      family <a class="cite" data-cite="biderman2023pythia"></a>: Pythia 160M, Pythia 410M, and Pythia
+                      the residual stream after the MLP contribution of three models of varying sizes from the <a
+                        href="https://github.com/EleutherAI/pythia" target="_blank">Pythia
+                        family</a> <a class="cite" data-cite="biderman2023pythia"></a>: Pythia 160M, Pythia 410M, and
+                      Pythia
                       1B.<br><br>
 
                       The reconstruction objective is the Fraction of Variance Unexplained (FVU) <a class="cite"
@@ -422,9 +456,9 @@
                       X})+\alpha_{\text{aux}}\cdot\text{AuxK}(\mathbf X,\widehat{\mathbf X})
                       $$
                       with $\alpha_{\text{aux}}=\tfrac{1}{32}$ and $\text{AuxK}(\mathbf X,\widehat{\mathbf X})$ is the
-                      auxiliary loos function defined in <a class="cite" data-cite="gao2024topk"></a>.<br><br>     
+                      auxiliary loos function defined in <a class="cite" data-cite="gao2024topk"></a>.<br><br>
 
-                      We use Adam ($\beta_1{=}0.9,\beta_2{=}0.999$), learning rate
+                      <!--We use Adam ($\beta_1{=}0.9,\beta_2{=}0.999$), learning rate
                       $\text{lr}=2{\times}10^{-4}/\sqrt{c \cdot n/2^{14}}$. We use a
                       batch size of $131072, 65536\text{ and } 32768$ for the three models, respectively, to maximize
                       computational usage. Following <a class="cite" data-cite="bricken2023monosemanticity"></a> we
@@ -433,16 +467,21 @@
                       have mean squared $\ell_2$ norm of 1 during SAE training, by first estimating the norm scaling
                       factor over 5 million
                       tokens of our train set. We mark a latent as “dead” after 10M
-                      tokens.<br><br>
+                      tokens.<br><br> -->
 
-                      To train all the SAEs, we sample 1 billion tokens from the Pile dataset <a class="cite"
-                        data-cite="pile"></a> and
-                      process them with a context size of 1024 (same pretraining data as the Pythia
-                      160M/410M/1B models).
-                      For Group-SAEs, activations in each batch are drawn from a random layer within the target group so
-                      every SAE (baseline or group)
-                      processes exactly 1B tokens.
+                      To train all the SAEs, we sample 1 billion tokens from the <a
+                        href="https://huggingface.co/datasets/EleutherAI/the_pile_deduplicated" target="_blank">Pile
+                        dataset</a> <a class="cite" data-cite="pile"></a>.
+                      For Group-SAEs, <strong>activations in each batch are randomly drawn from the layers within the
+                        target group</strong>, so that every SAE (baseline and group) processes exactly 1B tokens.
                     </p>
+
+                    <div class="container is-max-desktop" style="margin-bottom: 3rem; margin-top: 3rem;">
+                      <p class="image">
+                        <img src="static/gifs/training.gif" alt="Illustration of the training strategy"
+                          style="width: 90%; height: auto;">
+                      </p>
+                    </div>
               </div>
             </div>
           </div>
@@ -458,16 +497,24 @@
         <div class="container">
           <div class="columns is-centered">
             <div class="column is-four-fifths">
-              <h2 class="title">Evaluations</h2>
 
               <h3 class="title is-4">Comparison with baselines</h3>
               <div class="content">
                 <p class="has-text-justified">
-                  FVU and $\Delta\text{CE}$ for different approaches across model sizes. Our AMAD-based grouping
-                  strategy
-                  attains lower FVU and $\Delta\text{CE}$ than the baselines: evenly spaced groups and smaller SAEs
-                  trained on all layers. Both baselines use the same training FLOPs as our method. Percentages denote
-                  improvement over the <em>Smaller SAEs (All layers)</em> baseline (positive&nbsp;=&nbsp;better).
+                  We compare our method against two baselines:
+                <ul>
+                  <li><strong>Evenly spaced SAEs</strong>: instead of grouping with AMAD, we train Group-SAE on
+                    evenly-spaced groups.</li>
+                  <li><strong>Smaller SAEs</strong>: for all layers, we train standard SAEs with a lower expansion
+                    factor.</li>
+                </ul>
+
+                $\text{FVU}$ and $\Delta\text{CE}$ for different approaches across model sizes. Our AMAD-based grouping
+                strategy
+                attains lower $\text{FVU}$ and $\Delta\text{CE}$ than the baselines: evenly spaced groups and smaller
+                SAEs
+                trained on all layers. Both baselines use the same training FLOPs as our method. Percentages denote
+                improvement over the <em>Smaller SAEs (All layers)</em> baseline (positive&nbsp;=&nbsp;better).
                 </p>
               </div>
               <div class="table-container">
@@ -520,55 +567,73 @@
                 </table>
               </div>
 
-              <h3 class="title is-4">Reconstruction vs. Similarity</h3>
-              <div class="columns">
-                <div class="column is-half">
-                  <img src="static/images/eval/amd_vs_fvu.png" alt="Feature concordance heatmap for Pythia-160M"
-                    loading="lazy" style="width: 100%;" />
-                  <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
-                      baseline and Group-SAEs.</em></p>
-                </div>
-                <div class="column is-half">
-                  <img src="static/images/eval/amd_vs_delta_ce.png" alt="Feature distribution across layers"
-                    loading="lazy" style="width: 100%;" />
-                  <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing
-                      how
-                      features spread across similar layers.</em></p>
-                </div>
-              </div>
+              <br>
 
-              <h3 class="title is-4">Reconstruction vs. Compute (PFLOPs)</h3>
-              <div class="columns">
-                <div class="column is-half">
-                  <img src="static/images/eval/relative_flops_vs_fvu.png"
-                    alt="Feature concordance heatmap for Pythia-160M" loading="lazy" style="width: 100%;" />
-                  <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
-                      baseline and Group-SAEs.</em></p>
-                </div>
-                <div class="column is-half">
-                  <img src="static/images/eval/relative_flops_vs_delta_ce.png" alt="Feature distribution across layers"
-                    loading="lazy" style="width: 100%;" />
-                  <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing
-                      how
-                      features spread across similar layers.</em></p>
-                </div>
-              </div>
+              <h3 class="title is-4">Efficiency Improvements</h3>
+              
+              <div class="content">
+                <p>
+                  The computational cost, in FLOPs, of training a SAE can be divided into two main components:
+                </p>
 
-              <h3 class="title is-4">Auto-Interpretability</h3>
-              <div class="columns">
-                <div class="column is-half">
-                  <img src="static/images/autointerp/detection.png" alt="Feature concordance heatmap for Pythia-160M"
-                    loading="lazy" style="width: 100%;" />
-                  <p class="has-text-centered"><em>Mean Maximum Concordance (MMCO) showing feature similarity between
-                      baseline and Group-SAEs.</em></p>
-                </div>
-                <div class="column is-half">
-                  <img src="static/images/autointerp/fuzzing.png" alt="Feature distribution across layers"
-                    loading="lazy" style="width: 100%;" />
-                  <p class="has-text-centered"><em>Feature activation distribution across layers within groups, showing
-                      how
-                      features spread across similar layers.</em></p>
-                </div>
+                <ul>
+                  <li><strong>Activation caching</strong> (A): FLOPs required to generate the model's activations, which are used for training the SAE.</li>
+                  <li><strong>SAE Training</strong> (T): FLOPs involved in optimizing a single SAE using the cached activations.</li>
+                </ul>
+
+                <p>
+                  Thus, the total cost of training SAEs across all residual stream layers of a model is given by $A + L\,T$.
+                  Since both baseline and Group-SAE share the same architecture and undergo the same training process for a single SAE,
+                  the total cost of training all Group-SAEs is $A + G\,T$.
+                </p>
+
+                <p>The resulting compute savings, $\Delta(G)$, quantifying the relative change in total FLOPs when applying Group-SAEs instead of per-layer SAEs, is defined as:</p>
+
+                <p>\[\Delta(G) = 1 - \frac{A + G\,T}{A + L\,T}.\]</p>
+
+                <p>Since our method does not alter either $A$ or $T$, the efficiency gains of Group-SAEs are primarily determined by the $G/L$ ratio. The table below shows performance improvements of Group-SAE for each model when training a full suite of SAEs.</p>
+              </div>
+              
+              <div class="container is-max-desktop" style="margin-bottom: 3rem; margin-top: 3rem;">
+                <table class="table is-striped is-hoverable is-fullwidth evaluation-table" style="width: 90%; height: auto; margin: auto;">
+                  <thead>
+                    <tr>
+                      <th style="text-align: left;">Model</th>
+                      <th>$\widehat G$</th>
+                      <th>$A+L\,T$</th>
+                      <th>$A+\widehat G\,T$</th>
+                      <th>$\Delta_{\%} (\widehat G)$</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="text-align: left;">Pythia 160M</td>
+                      <td>6</td>
+                      <td>1.34</td>
+                      <td><b>0.77</b></td>
+                      <td>+42.5%</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align: left;">Pythia 410M</td>
+                      <td>9</td>
+                      <td>4.73</td>
+                      <td><b>2.21</b></td>
+                      <td>+53.3%</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align: left;">Pythia 1B</td>
+                      <td>6</td>
+                      <td>12.48</td>
+                      <td><b>5.77</b></td>
+                      <td>+53.7%</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p class="has-text-centered" style="margin-top: 1rem;">
+                  <em>Comparison of FLOPs (10<sup>18</sup>) required for caching activations and training Baseline and Group SAEs on 1B tokens, 
+                    covering all layers with an expansion factor of 16 and 
+                    Ĝ = min { G | AMAD(G) &lt; 0.2 }.</em>
+                </p>
               </div>
             </div>
           </div>
