@@ -400,36 +400,43 @@
                   \[
                   \widehat{G} = \min \{G \in \{1, ..., L-1\} \mid \text{AMAD}(G) < \theta \} \] </p>
                     <p>
-                      Intuitively, when $G$ is small, each group aggregates distant layers, increasing AMAD; conversely, when $G=L$ (one group per layer), AMAD becomes zero but no computational savings are achieved. <strong>The goal is therefore to select the smallest $G$ such that the groups remain sufficiently homogeneous</strong>, i.e., AMAD$(G)$ stays below a target threshold.
+                      Intuitively, when $G$ is small, each group aggregates distant layers, increasing AMAD; conversely,
+                      when $G=L$ (one group per layer), AMAD becomes zero but no computational savings are achieved.
+                      <strong>The goal is therefore to select the smallest $G$ such that the groups remain sufficiently
+                        homogeneous</strong>, i.e., AMAD$(G)$ stays below a target threshold.
                     </p>
                     <p>
-                      By training Group-SAEs for different models and values of G, and plotting performance metrics against AMAD (see figure below, <i>Figure 2</i> in the paper), we identify an optimal threshold around $\theta^* \approx 0.2$, beyond which reconstruction
+                      By training Group-SAEs for different models and values of G, and plotting performance metrics
+                      against AMAD (see figure below, <i>Figure 2</i> in the paper), we identify an optimal threshold
+                      around $\theta^* \approx 0.2$, beyond which reconstruction
                       performance
                       degrades more rapidly.
                     </p>
 
-                    <div class="columns is-centered">
+                    <div class="columns is-centered" style="margin-bottom: 0px;">
                       <div class="column is-half">
-                        <div class="has-text-centered">
-                          <img src="static/images/eval/amd_vs_fvu.png"
-                              alt="Feature concordance heatmap for Pythia-160M"
-                              loading="lazy" style="width: 70%;" />
-                          <p class="has-text-centered">
-                            <em>Mean Maximum Concordance (MMCO) showing feature similarity
-                            between baseline and Group-SAEs.</em>
-                          </p>
+                        <div>
+                          <img src="static/images/eval/amd_vs_fvu.png" alt="Feature concordance heatmap for Pythia-160M"
+                            loading="lazy" style="width: 70%;" />
                         </div>
                       </div>
 
-                      <div class="column is-half has-text-centered">
-                        <img src="static/images/eval/amd_vs_delta_ce.png"
-                            alt="Feature distribution across layers"
-                            loading="lazy" style="width: 70%;" />
-                        <p class="has-text-centered">
-                          <em>Feature activation distribution across layers within groups,
-                          showing how features spread across similar layers.</em>
-                        </p>
+                      <div class="column is-half">
+                        <img src="static/images/eval/amd_vs_delta_ce.png" alt="Feature distribution across layers"
+                          loading="lazy" style="width: 70%;" />
                       </div>
+                    </div>
+
+                    <div class="column is-full" style="padding: 0px;">
+                      <p>
+                        <em>$\text{FVU}$ (left) and $\Delta\text{CE}_{\%}$ (right) over $\text{AMAD}(G)$ for every $G \in {1, .
+                          . . , L − 1}$. The highlighted star
+                          markers represent the baseline SAEs (i.e., with no grouping), while the other points
+                          correspond to Group-SAEs,
+                          ordered from left to right by increasing AMAD, which reflects a decrease in the number of
+                          groups. The shaded area
+                          indicates one std.</em>
+                      </p>
                     </div>
 
                     <h3>SAE training</h3>
@@ -449,8 +456,9 @@
                       X})=\frac{\lVert\mathbf{X}-\widehat{\mathbf{X}}\rVert_F^2}{\lVert \mathbf{X} -
                       \overline{\mathbf{X}} \rVert_F^2}
                       $$
-                      where $\mathbf X, \widehat{\mathbf X} \in \mathbb R^{B \times n}$ represent batch of activations
-                      and reconstructions, respectively. The total loss is then:
+                      where $\mathbf X, \widehat{\mathbf X}, \overline{\mathbf{X}} \in \mathbb R^{B \times n}$ represent a batch of activations
+                      SAE reconstructions, and average batch activations, respectively.<br>
+                      The total loss is then:
                       $$
                       \mathcal L(\mathbf X)=\text{FVU}(\mathbf X,\widehat{\mathbf
                       X})+\alpha_{\text{aux}}\cdot\text{AuxK}(\mathbf X,\widehat{\mathbf X})
@@ -570,32 +578,40 @@
               <br>
 
               <h3 class="title is-4">Efficiency Improvements</h3>
-              
+
               <div class="content">
                 <p>
                   The computational cost, in FLOPs, of training a SAE can be divided into two main components:
                 </p>
 
                 <ul>
-                  <li><strong>Activation caching</strong> (A): FLOPs required to generate the model's activations, which are used for training the SAE.</li>
-                  <li><strong>SAE Training</strong> (T): FLOPs involved in optimizing a single SAE using the cached activations.</li>
+                  <li><strong>Activation caching</strong> (A): FLOPs required to generate the model's activations, which
+                    are used for training the SAE.</li>
+                  <li><strong>SAE Training</strong> (T): FLOPs involved in optimizing a single SAE using the cached
+                    activations.</li>
                 </ul>
 
                 <p>
-                  Thus, the total cost of training SAEs across all residual stream layers of a model is given by $A + L\,T$.
-                  Since both baseline and Group-SAE share the same architecture and undergo the same training process for a single SAE,
+                  Thus, the total cost of training SAEs across all residual stream layers of a model is given by $A +
+                  L\,T$.
+                  Since both baseline and Group-SAE share the same architecture and undergo the same training process
+                  for a single SAE,
                   the total cost of training all Group-SAEs is $A + G\,T$.
                 </p>
 
-                <p>The resulting compute savings, $\Delta(G)$, quantifying the relative change in total FLOPs when applying Group-SAEs instead of per-layer SAEs, is defined as:</p>
+                <p>The resulting compute savings, $\Delta(G)$, quantifying the relative change in total FLOPs when
+                  applying Group-SAEs instead of per-layer SAEs, is defined as:</p>
 
                 <p>\[\Delta(G) = 1 - \frac{A + G\,T}{A + L\,T}.\]</p>
 
-                <p>Since our method does not alter either $A$ or $T$, the efficiency gains of Group-SAEs are primarily determined by the $G/L$ ratio. The table below shows performance improvements of Group-SAE for each model when training a full suite of SAEs.</p>
+                <p>Since our method does not alter either $A$ or $T$, the efficiency gains of Group-SAEs are primarily
+                  determined by the $G/L$ ratio. The table below shows performance improvements of Group-SAE for each
+                  model when training a full suite of SAEs.</p>
               </div>
-              
+
               <div class="container is-max-desktop" style="margin-bottom: 3rem; margin-top: 3rem;">
-                <table class="table is-striped is-hoverable is-fullwidth evaluation-table" style="width: 90%; height: auto; margin: auto;">
+                <table class="table is-striped is-hoverable is-fullwidth evaluation-table"
+                  style="width: 90%; height: auto; margin: auto;">
                   <thead>
                     <tr>
                       <th style="text-align: left;">Model</th>
@@ -630,8 +646,9 @@
                   </tbody>
                 </table>
                 <p class="has-text-centered" style="margin-top: 1rem;">
-                  <em>Comparison of FLOPs (10<sup>18</sup>) required for caching activations and training Baseline and Group SAEs on 1B tokens, 
-                    covering all layers with an expansion factor of 16 and 
+                  <em>Comparison of FLOPs (10<sup>18</sup>) required for caching activations and training Baseline and
+                    Group SAEs on 1B tokens,
+                    covering all layers with an expansion factor of 16 and
                     Ĝ = min { G | AMAD(G) &lt; 0.2 }.</em>
                 </p>
               </div>
